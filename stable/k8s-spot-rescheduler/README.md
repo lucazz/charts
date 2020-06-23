@@ -12,17 +12,21 @@ You should install this chart into the `kube-system` namespace:
 ```
 helm install \
   --namespace kube-system \
-  incubator/k8s-spot-rescheduler
+  stable/k8s-spot-rescheduler
 ```
 
 If your cluster has RBAC enabled, run this command:
 ```
 helm install \
   --namespace kube-system \
-  --set rbac.enabled=true \
-  incubator/k8s-spot-rescheduler
+  --set rbac.create=true \
+  stable/k8s-spot-rescheduler
 ```
 
 ## Configuration
 
 Add the parameters to `cmdOptions` which you want to use. Here is [the full list of available options](https://github.com/pusher/k8s-spot-rescheduler#flags).
+
+| Parameter                          | Description                                                                                                                | Default                                            |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `priorityClassName`                | priorityClassName                                                                                                          | `""`    

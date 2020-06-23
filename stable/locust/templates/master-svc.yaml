@@ -8,6 +8,15 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     app: {{ template "locust.fullname" . }}
     component: "master"
+    {{- range $key, $value :=  .Values.service.extraLabels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- if .Values.service.annotations }}
+  annotations:
+  {{- range $key, $value :=  .Values.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -25,6 +34,6 @@ spec:
     protocol: TCP
     targetPort: 5558
   selector:
-    app: {{ template "locust.fullname" . }}
+    app.kubernetes.io/name: {{ include "locust.fullname" . }}
     component: "master"
   sessionAffinity: None

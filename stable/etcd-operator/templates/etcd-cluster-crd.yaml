@@ -19,4 +19,3 @@ spec:
 {{ toYaml .Values.etcdCluster.tls | indent 4 }}
   {{- end }}
 {{- end }}
-

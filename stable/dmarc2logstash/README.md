@@ -1,5 +1,10 @@
 # dmarc2logstash Helm Chart
 
+## NOTICE: This chart has moved!
+
+Due to the [deprecation and obsoletion plan](https://github.com/helm/charts#status-of-the-project) of the Helm charts repository this chart has been moved to a new repository. Refer to the [dmarc2logstash GitHub project](https://github.com/jertel/dmarc2logstash) for information on installing this chart from the new repository.
+
+## Overview 
 [dmarc2logstash](https://github.com/jertel/dmarc2logstash): A POP3 polling service that converts Domain-based Message Authentication, Reporting, and Complicane (DMARC) reports into a logstash feed. More information about the DMARC organization and RFC 7489 standards can be found at https://dmarc.org. An accompanying [dashboard](https://github.com/jertel/dmarc2logstash/blob/master/grafana-dashboard.json) is available for import into Grafana.
 
 ## Installing the Chart
@@ -27,15 +32,16 @@ The command removes all the Kubernetes components associated with the chart and 
 setting                           | description                                                                                                           | default
 ----------------------------------|-----------------------------------------------------------------------------------------------------------------------|----------
 dmarc2logstash.image.repository   | dmarc2logstash Docker image repository                                                                                | jertel/dmarc2logstash
-dmarc2logstash.image.tag          | dmarc2logstash image tag, typically the version, of the Docker image                                                  | 1.0.0
+dmarc2logstash.image.tag          | dmarc2logstash image tag, typically the version, of the Docker image                                                  | 1.0.3
 dmarc2logstash.image.pullPolicy   | dmarc2logstash Kubernetes image pull policy                                                                           | IfNotPresent
+delete_messages                   | Set to 1 to delete messages or 0 to preserve messages (useful for debugging) | 1
 filebeat.image.repository         | Elastic filebeat Docker image repository                                                                              | docker.elastic.co/beats/filebeat
-filebeat.image.tag                | Elastic filebeat tag, typically the version, of the Docker image                                                      | 6.2.1
+filebeat.image.tag                | Elastic filebeat tag, typically the version, of the Docker image                                                      | 6.6.0
 filebeat.image.pullPolicy         | Elastic filebeat Kubernetes image pull policy                                                                         | IfNotPresent
 filebeat.logstash.host            | Logstash service host; ex: logstash (this value must be provided)                                                     | ""
 filebeat.logstash.port            | Logstash service port                                                                                                 | 5000
 filebeat.logstash.sourceType      | Logstash source type will allow custom filtering via the Logstash configuration                                       | json-logs
-filebeat.logstash.index           | Elastisearch index that will contain the new DMARC data (index will be created on-the-fly if doesn't exist)           | dmarc
+filebeat.logstash.index           | Elasticsearch index that will contain the new DMARC data (index will be created on-the-fly if doesn't exist)           | dmarc
 filebeat.logstash.timeout         | Seconds to wait before timing out the connection to logstash                                                          | 15
 
 ## Secrets

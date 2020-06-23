@@ -7,15 +7,13 @@ Credit to https://github.com/ingvagabund. This is an implementation of that work
 ## Prerequisites Details
 * Kubernetes 1.5 (for `StatefulSets` support)
 * PV support on the underlying infrastructure
+* ETCD version >= 3.0.0
 
 ## StatefulSet Details
 * https://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/
 
 ## StatefulSet Caveats
 * https://kubernetes.io/docs/concepts/abstractions/controllers/statefulsets/#limitations
-
-## Todo
-* Implement SSL
 
 ## Chart Details
 This chart will do the following:
@@ -35,23 +33,27 @@ $ helm install --name my-release incubator/etcd
 
 The following table lists the configurable parameters of the etcd chart and their default values.
 
-| Parameter               | Description                          | Default                                            |
-| ----------------------- | ------------------------------------ | -------------------------------------------------- |
-| `Name`                  | Spark master name                    | `etcd`                                             |
-| `Image`                 | Container image name                 | `k8s.gcr.io/etcd-amd64`                            |
-| `ImageTag`              | Container image tag                  | `2.2.5`                                            |
-| `ImagePullPolicy`       | Container pull policy                | `Always`                                           |
-| `Replicas`              | k8s statefulset replicas             | `3`                                                |
-| `Component`             | k8s selector key                     | `etcd`                                             |
-| `Cpu`                   | container requested cpu              | `100m`                                             |
-| `Memory`                | container requested memory           | `512Mi`                                            |
-| `ClientPort`            | k8s service port                     | `2379`                                             |
-| `PeerPorts`             | Container listening port             | `2380`                                             |
-| `Storage`               | Persistent volume size               | `1Gi`                                              |
-| `StorageClass`          | Persistent volume storage class      | `anything`                                         |
-| `Affinity`              | Affinity settings for pod assignment | `{}`                                               |
-| `NodeSelector`          | Node labels for pod assignment       | `{}`                                               |
-| `Tolerations`           | Toleration labels for pod assignment | `[]`                                               |
+| Parameter                           | Description                          | Default                                            |
+| ----------------------------------- | ------------------------------------ | -------------------------------------------------- |
+| `image.repository`                  | Container image repository           | `k8s.gcr.io/etcd-amd64`                            |
+| `image.tag`                         | Container image tag                  | `3.2.26`                                           |
+| `image.pullPolicy`                  | Container pull policy                | `IfNotPresent`                                     |
+| `replicas`                          | k8s statefulset replicas             | `3`                                                |
+| `resources`                         | container required resources         | `{}`                                               |
+| `clientPort`                        | k8s service port                     | `2379`                                             |
+| `peerPorts`                         | Container listening port             | `2380`                                             |
+| `storage`                           | Persistent volume size               | `1Gi`                                              |
+| `storageClass`                      | Persistent volume storage class      | `anything`                                         |
+| `affinity`                          | affinity settings for pod assignment | `{}`                                               |
+| `nodeSelector`                      | Node labels for pod assignment       | `{}`                                               |
+| `tolerations`                       | Toleration labels for pod assignment | `[]`                                               |
+| `extraEnv`                          | Optional environment variables       | `[]`                                               |
+| `memoryMode`                        | Using memory as backend storage      | `false`                                            |
+| `auth.client.enableAuthentication`  | Enables host authentication using TLS certificates. Existing secret is required.    | `false` |
+| `auth.client.secureTransport`       | Enables encryption of client communication using TLS certificates | `false` |
+| `auth.peer.useAutoTLS`              | Automatically create the TLS certificates | `false` |
+| `auth.peer.secureTransport`         | Enables encryption peer communication using TLS certificates **(At the moment works only with Auto TLS)** | `false` |
+| `auth.peer.enableAuthentication`     | Enables host authentication using TLS certificates. Existing secret required | `false` |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
@@ -60,8 +62,19 @@ Alternatively, a YAML file that specifies the values for the parameters can be p
 ```bash
 $ helm install --name my-release -f values.yaml incubator/etcd
 ```
-
 > **Tip**: You can use the default [values.yaml](values.yaml)
+# To install the chart with secure transport enabled
+First you must create a secret which would contain the client certificates: cert, key and the CA which was to used to sign them.
+Create the secret using this command:
+```bash
+$ kubectl create secret generic etcd-client-certs --from-file=ca.crt=path/to/ca.crt --from-file=cert.pem=path/to/cert.pem --from-file=key.pem=path/to/key.pem
+```
+Deploy the chart with the following flags enabled:
+```bash
+$ helm install --name my-release --set auth.client.secureTransport=true --set auth.client.enableAuthentication=true --set auth.client.existingSecret=etcd-client-certs --set auth.peer.useAutoTLS=true incubator/etcd
+```
+Reference to how to generate the needed certificate:
+> Ref: https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
 
 # Deep dive
 
@@ -96,7 +109,7 @@ $ kill -9 ETCD_1_PID
 ```
 
 ```shell
-$ kubectl get pods -l "component=${RELEASE-NAME}-etcd"
+$ kubectl get pods -l "release=${RELEASE-NAME},app=etcd"
 NAME                 READY     STATUS        RESTARTS   AGE
 etcd-0               1/1       Running       0          54s
 etcd-2               1/1       Running       0          51s
@@ -105,7 +118,7 @@ etcd-2               1/1       Running       0          51s
 After a while:
 
 ```shell
-$ kubectl get pods -l "component=${RELEASE-NAME}-etcd"
+$ kubectl get pods -l "release=${RELEASE-NAME},app=etcd"
 NAME                 READY     STATUS    RESTARTS   AGE
 etcd-0               1/1       Running   0          1m
 etcd-1               1/1       Running   0          20s
@@ -135,7 +148,7 @@ This is for reference. Scaling should be managed by `helm upgrade`
 The etcd cluster can be scale up by running ``kubectl patch`` or ``kubectl edit``. For instance,
 
 ```sh
-$ kubectl get pods -l "component=${RELEASE-NAME}-etcd"
+$ kubectl get pods -l "release=${RELEASE-NAME},app=etcd"
 NAME      READY     STATUS    RESTARTS   AGE
 etcd-0    1/1       Running   0          7m
 etcd-1    1/1       Running   0          7m
@@ -144,7 +157,7 @@ etcd-2    1/1       Running   0          6m
 $ kubectl patch statefulset/etcd -p '{"spec":{"replicas": 5}}'
 "etcd" patched
 
-$ kubectl get pods -l "component=${RELEASE-NAME}-etcd"
+$ kubectl get pods -l "release=${RELEASE-NAME},app=etcd"
 NAME      READY     STATUS    RESTARTS   AGE
 etcd-0    1/1       Running   0          8m
 etcd-1    1/1       Running   0          8m
@@ -159,7 +172,7 @@ Scaling-down is similar. For instance, changing the number of replicas to ``4``:
 $ kubectl edit statefulset/etcd
 statefulset "etcd" edited
 
-$ kubectl get pods -l "component=${RELEASE-NAME}-etcd"
+$ kubectl get pods -l "release=${RELEASE-NAME},app=etcd"
 NAME      READY     STATUS    RESTARTS   AGE
 etcd-0    1/1       Running   0          8m
 etcd-1    1/1       Running   0          8m

@@ -1,3 +1,4 @@
+{{- if .Values.server.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -14,6 +15,12 @@ metadata:
     component: server
 spec:
   type: {{ .Values.server.service.type }}
+  {{ if .Values.server.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- range .Values.server.service.loadBalancerSourceRanges }}
+    - {{ . }}
+    {{- end }}
+  {{ end }}
   ports:
     - port: {{ .Values.server.service.httpPort }}
       targetPort: 8153
@@ -22,15 +29,8 @@ spec:
       {{- end}}
       protocol: TCP
       name: http
-
-    - port: {{ .Values.server.service.httpsPort }}
-      targetPort: 8154
-      {{- if .Values.server.service.nodeHttpsPort }}
-      nodePort: {{ .Values.server.service.nodeHttpsPort }}
-      {{- end}}
-      protocol: TCP
-      name: https
   selector:
     app: {{ template "gocd.name" . }}
     release: {{ .Release.Name | quote }}
     component: server
+{{- end -}}

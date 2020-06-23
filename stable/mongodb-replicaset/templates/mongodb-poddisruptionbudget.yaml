@@ -7,7 +7,11 @@ metadata:
     chart: {{ template "mongodb-replicaset.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
+{{- if .Values.extraLabels }}
+{{ toYaml .Values.extraLabels | indent 4 }}
+{{- end }}
   name: {{ template "mongodb-replicaset.fullname" . }}
+  namespace: {{ template "mongodb-replicaset.namespace" . }}
 spec:
   selector:
     matchLabels:

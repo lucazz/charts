@@ -1,6 +1,9 @@
 dependencies:
 - name: postgresql
   repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 0.8.3
-digest: sha256:7669c2dcb2741e52c61240019803c5a8a0061e51195060b2bd3b8176648faa63
-generated: 2018-04-19T13:47:45.089773+02:00
+  version: 8.2.0
+- name: mysql
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  version: 0.6.0
+digest: sha256:e7f6d50c8a679e5b674212d8ef83781aa29df89d0490670f9f222b3f71e85b30
+generated: "2020-01-29T11:02:00.270992632+01:00"
